@@ -9,4 +9,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ForExTrader.Cryptography\ForexTrader.Cryptography.csproj" />
+    <ProjectReference Include="..\ForexTrader.DataCollector\ForexTrader.DataCollector.csproj" />
+    <ProjectReference Include="..\ForExTrader.Logger\ForexTrader.Logging.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -5,16 +5,14 @@ using System.Linq;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
-using ForEXTrader.Libs;
+using ForexTrader.Logging;
 
-namespace ForEXTrader
+namespace ForexTrader
 {
     public class Menu
     {
         private static ConcurrentQueue<object> _loggerQueue;
         private MenuLib _menuLib;
-
-        public bool FirstTimeRun { get; set; }
 
         public string ApiKey { get; set; }
 
@@ -32,9 +30,9 @@ namespace ForEXTrader
         public void StartMenu()
         {
             Console.WriteLine("Checking if first time run...");
-
-            FirstTimeRun = _menuLib.CheckFirstTime(SystemLib.IsUnix());
-            if (FirstTimeRun == false)
+            
+            // Check first time run
+            if (!_menuLib.CheckFirstTime(ArchitectureExplorer.IsUnix()))
             {
                 Console.WriteLine("Welcome back.");
                 var loadedSettings = _menuLib.LoadSettings();

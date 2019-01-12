@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Collections.Concurrent;
 
-namespace ForEXTrader
+namespace ForexTrader.Logging
 {
     public class Logger
     {
@@ -25,13 +25,15 @@ namespace ForEXTrader
 
         private void SetupLogFile()
         {
-            if (SystemLib.IsUnix())
+            if (ArchitectureExplorer.IsUnix())
             {
-                _dirPath = SystemLib.ArchRootPath(_unixLoc);
+                _loggerQueue.Enqueue("System is unix based. Setting up logging directories and file.");
+                _dirPath = ArchitectureExplorer.ArchRootPath(_unixLoc);
             }
             else
             {
-                _dirPath = SystemLib.ArchRootPath(_winLoc);
+                _loggerQueue.Enqueue("System is not unix based. Setting up logging directories and file.");
+                _dirPath = ArchitectureExplorer.ArchRootPath(_winLoc);
             }
 
             if (!File.Exists(_dirPath))
@@ -79,12 +81,11 @@ namespace ForEXTrader
             // example - 06 / 12 / 2018 21:30:24.6886938, GET, https://api-fxpractice.oanda.com/v3/accounts/bef06b9e0a53a0ca13149ebcecb3f9fc-606b51db4feaa79f58827dcb4d50d5e7/pricing, Bad Request
 
             var dateTime = DateTime.Now;
-            var logMessage = string.Format("{0} {1}, {2}, {3}, {4}",
-                dateTime.ToShortDateString(),
-                dateTime.TimeOfDay,
-                responseMessage.RequestMessage.Method.Method,
-                responseMessage.RequestMessage.RequestUri.AbsoluteUri,
-                responseMessage.ReasonPhrase);
+            var logMessage = $"{dateTime.ToShortDateString()}, " +
+                $"{dateTime.TimeOfDay}, " +
+                $"{responseMessage.RequestMessage.Method.Method}, " +
+                $"{responseMessage.RequestMessage.RequestUri.AbsoluteUri}, " +
+                $"{responseMessage.ReasonPhrase}";
 
             _logWriter.WriteLine(logMessage);
         }
@@ -92,10 +93,8 @@ namespace ForEXTrader
         private void LogStringMessage(string stringMessage)
         {
             var dateTime = DateTime.Now;
-            var logMessage = string.Format("{0} {1}, {2}",
-                dateTime.ToShortDateString(),
-                dateTime.TimeOfDay,
-                stringMessage);
+            var logMessage = $"{dateTime.ToShortDateString()} {dateTime.TimeOfDay}, {stringMessage}";
+                
 
             _logWriter.WriteLine(logMessage);
         }

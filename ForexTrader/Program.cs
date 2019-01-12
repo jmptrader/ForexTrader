@@ -6,8 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using Newtonsoft.Json.Linq;
+using ForexTrader.Logging;
+using ForexTrader.DataCollector;
 
-namespace ForEXTrader
+namespace ForexTrader
 {
     class Program
     {
@@ -31,10 +33,10 @@ namespace ForEXTrader
             SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
 
             Console.WriteLine("Setting up ApiRequest library.");
-            var apiRequests = new ApiRequestLib(menu.ApiKey, menu.AccountId);
+            var apiRequests = new ApiRequests(menu.ApiKey, menu.AccountId);
             Console.WriteLine("Setting up collector.");        
             var queue = new LimitedQueue<JObject>(5);
-            var collector = new Collector(100, loggerQueue, queue, apiRequests);
+            var collector = new Collector(50, loggerQueue, apiRequests);
             var loggerTask = Task.Factory.StartNew(() =>
             {
                 lock (logger)

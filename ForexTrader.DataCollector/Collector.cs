@@ -9,21 +9,21 @@ using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace ForEXTrader
+namespace ForexTrader.DataCollector
 {
     public class Collector
     {
         readonly private int _frequency;
         private static ConcurrentQueue<object> _loggerQueue;
-        private static LimitedQueue<JObject> _queue;
-        private ApiRequestLib _apiRequests;
+        private static LimitedQueue<JObject> _collectorQueue;
+        private ApiRequests _apiRequests;
 
-        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, LimitedQueue<JObject> queue, ApiRequestLib apiRequest)
+        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ApiRequests apiRequest)
         {
             _frequency = frequency;
             _loggerQueue = loggerQueue;
-            _queue = queue;
             _apiRequests = apiRequest;
+            _collectorQueue = new LimitedQueue<JObject>(5);
         }
 
         public void Runner()
@@ -34,7 +34,7 @@ namespace ForEXTrader
                 if (res != null)
                 {
                     var content = JObject.Parse(res.ReadAsStringAsync().Result);
-                    _queue.Enqueue(content);
+                    _collectorQueue.Enqueue(content);
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));

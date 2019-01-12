@@ -4,8 +4,9 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.IO;
 using System.Linq;
+using ForexTrader.Cryptography;
 
-namespace ForEXTrader.Libs
+namespace ForexTrader
 {
     public class MenuLib
     {
@@ -13,10 +14,13 @@ namespace ForEXTrader.Libs
         private readonly string _winLoc = @"Program Files\ForexTrader\";
         private static ConcurrentQueue<object> _loggerQueue;
         private string _dirPath;
+        private Decrypt _decrypt;
+        private Encrypt _encrypt = new Encrypt();
 
         public MenuLib(ConcurrentQueue<object> loggerQueue)
         {
             _loggerQueue = loggerQueue;
+            _decrypt = new Decrypt(_loggerQueue);
         }
 
         public Tuple<string, string> SetAccountSettings()
@@ -110,7 +114,7 @@ namespace ForEXTrader.Libs
                 return null;
             }
 
-            var settings = CryptoLib.AesDecrypt(encryptedSettings, password);
+            var settings = _decrypt.AesDecrypt(encryptedSettings, password);
             var settingsSplit = settings.Split(':', StringSplitOptions.RemoveEmptyEntries);
             if (settingsSplit.Length != 2)
             {
@@ -140,7 +144,7 @@ namespace ForEXTrader.Libs
                 Console.WriteLine("We need a valid password.");
             }
 
-            var encryptedSettings = CryptoLib.AesEncrypt(apiKey + ":" + accountId, password);
+            var encryptedSettings = _encrypt.AesEncrpyt(apiKey + ":" + accountId, password);
             using (var sw = new StreamWriter(Path.Join(_dirPath, "settings.txt"), false))
             {
                 sw.WriteLine(encryptedSettings);

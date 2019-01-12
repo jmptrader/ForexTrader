@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ForEXTrader
+namespace ForexTrader.DataCollector
 {
     public class LimitedQueue<T>
     {
