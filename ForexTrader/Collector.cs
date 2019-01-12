@@ -6,21 +6,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Net.Http;
+using System.IO;
+using Newtonsoft.Json.Linq;
 
 namespace ForEXTrader
 {
     public class Collector
     {
         readonly private int _frequency;
-        private  ConcurrentQueue<object> _loggerQueue;
-        private LimitedQueue<HttpContent> _queue;
-        private ApiRequest _collectorRequester;
+        private static ConcurrentQueue<object> _loggerQueue;
+        private static LimitedQueue<JObject> _queue;
+        private ApiRequestLib _apiRequests;
 
-        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, LimitedQueue<HttpContent> queue)
+        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, LimitedQueue<JObject> queue, ApiRequestLib apiRequest)
         {
             _frequency = frequency;
             _loggerQueue = loggerQueue;
             _queue = queue;
+            _apiRequests = apiRequest;
         }
 
         public void Runner()
@@ -30,7 +33,8 @@ namespace ForEXTrader
                 var res = CollectCurrentRates();
                 if (res != null)
                 {
-                    _queue.Enqueue(res);
+                    var content = JObject.Parse(res.ReadAsStringAsync().Result);
+                    _queue.Enqueue(content);
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));
@@ -39,7 +43,7 @@ namespace ForEXTrader
 
         public HttpContent CollectCurrentRates()
         {
-            var response = _collectorRequester.GetExchangeRates().Result;
+            var response = _apiRequests.GetExchangeRates().Result;
             if (!response.IsSuccessStatusCode)
             {
                 _loggerQueue.Enqueue(response);

@@ -2,73 +2,88 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
+using ForEXTrader.Libs;
 
 namespace ForEXTrader
 {
-    class Menu
+    public class Menu
     {
-        bool FirstTimeRun { get; set; }
+        private static ConcurrentQueue<object> _loggerQueue;
+        private MenuLib _menuLib;
 
-        public string Api { get; set; }
+        public bool FirstTimeRun { get; set; }
 
-        public int Keep { get; set; }
+        public string ApiKey { get; set; }
+
+        public string AccountId { get; set; }
+
+        public bool RetrievedAccSettings { get; set; }
+
+        public Menu(ConcurrentQueue<object> loggerQueue)
+        {
+            RetrievedAccSettings = false;
+            _loggerQueue = loggerQueue;
+            _menuLib = new MenuLib(_loggerQueue);
+        }
 
         public void StartMenu()
         {
             Console.WriteLine("Checking if first time run...");
-            FirstTimeRun = CheckFirstTime();
-            if (FirstTimeRun == true)
+
+            FirstTimeRun = _menuLib.CheckFirstTime(SystemLib.IsUnix());
+            if (FirstTimeRun == false)
             {
                 Console.WriteLine("Welcome back.");
-                LoadSettings();
+                var loadedSettings = _menuLib.LoadSettings();
+                ApiKey = loadedSettings.Item1;
+                AccountId = loadedSettings.Item2;
+                RetrievedAccSettings = true;
                 BaseMenu();
             }
             else
             {
-                var validKeep = false;
-                Console.WriteLine("Welcome! Please fill in the following settings to continue.\nAPI key");
-                Api = Console.ReadLine();
-                while (!validKeep)
-                {
-                    Console.WriteLine("Percentage of cash to save");
-                    var percentage = Console.ReadLine();
-                    if (int.TryParse(percentage, out var result))
-                    {
-                        validKeep = true;
-                        Keep = result;
-                        break;
-                    }
-                    Console.WriteLine("Incorrect answer type. Please insert an integer cunt.");
-                }
+                var accountSettings = _menuLib.SetAccountSettings();
+                ApiKey = accountSettings.Item1;
+                AccountId = accountSettings.Item2;
+                RetrievedAccSettings = true;
             }
-        }
-
-        private bool CheckFirstTime()
-        {
-            try
-            {
-                if (Directory.GetFiles(Directory.GetCurrentDirectory(), "settings.txt", SearchOption.TopDirectoryOnly).FirstOrDefault() == "settings.txt")
-                {
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Failed to search for settings.txt, Error: " + e);
-            }
-            return false;
-        }
-
-        private List<string> LoadSettings()
-        {
-            return new List<string>();
-        }
-
+            BaseMenu();
+        }        
+        
         private void BaseMenu()
         {
 
+            Console.Clear();
+            Console.WriteLine("=== FOREX TRADER ===\n");
+            while (true)
+            {
+                Console.WriteLine("1. Set Collector Frequency.\n" +
+                    "2. Set Account Details.\n" +
+                    "3. Exit Program.");
+                var basemenuInput = Console.ReadLine();
+                int.TryParse(basemenuInput, out var intInput);
+                switch(intInput)
+                {
+                    case 1:
+                        Console.WriteLine("Setting collector frequency");
+                        
+                        break;
+                    case 2:
+                        _menuLib.SetAccountSettings();
+                        break;
+                    case 3:
+                        ExitProgram();
+                        break;
+                }
+            }
+        }
+
+        private void ExitProgram()
+        {
+            Environment.Exit(0);
         }
     }
 }

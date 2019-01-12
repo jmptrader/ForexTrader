@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
 using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
 
 namespace ForEXTrader
 {
@@ -12,15 +13,28 @@ namespace ForEXTrader
     {
         static void Main(string[] args)
         {
-            // var menu = new Menu();
-            // menu.StartMenu();
-
-            //Create queues
+            Console.WriteLine("Setting up logger.");
             var loggerQueue = new ConcurrentQueue<object>();
-            var queue = new LimitedQueue<HttpContent>(5);
-
             var logger = new Logger(loggerQueue);
-            var collector = new Collector(200, loggerQueue, queue);
+
+            Console.WriteLine("Setting up menu.");
+            var menu = new Menu(loggerQueue);
+            var menuTask = Task.Factory.StartNew(() =>
+            {
+                lock (menu)
+                {
+                    menu.StartMenu();
+                }
+            });
+
+            // Wait for account settings to be assigned.
+            SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
+
+            Console.WriteLine("Setting up ApiRequest library.");
+            var apiRequests = new ApiRequestLib(menu.ApiKey, menu.AccountId);
+            Console.WriteLine("Setting up collector.");        
+            var queue = new LimitedQueue<JObject>(5);
+            var collector = new Collector(100, loggerQueue, queue, apiRequests);
             var loggerTask = Task.Factory.StartNew(() =>
             {
                 lock (logger)
@@ -35,7 +49,7 @@ namespace ForEXTrader
                     collector.Runner();
                 }
             });
-
+        
             Task.WaitAll(loggerTask, collectorTask);
         }
     }

@@ -25,13 +25,13 @@ namespace ForEXTrader
 
         private void SetupLogFile()
         {
-            if (IsLinux())
+            if (SystemLib.IsUnix())
             {
-                _dirPath = Path.Join(Path.GetPathRoot(Environment.SystemDirectory), _unixLoc);
+                _dirPath = SystemLib.ArchRootPath(_unixLoc);
             }
             else
             {
-                _dirPath = Path.Join(Path.GetPathRoot(Environment.SystemDirectory), _winLoc);
+                _dirPath = SystemLib.ArchRootPath(_winLoc);
             }
 
             if (!File.Exists(_dirPath))
@@ -62,13 +62,18 @@ namespace ForEXTrader
                     if (item.GetType() == typeof(HttpResponseMessage))
                     {
                         var message = (HttpResponseMessage)item;
-                        Log(message);
+                        LogHttpResponseMessage(message);
+                    }
+                    else if (item.GetType() == typeof(string))
+                    {
+                        var message = item.ToString();
+                        LogStringMessage(message);
                     }
                 }
             }
         }
 
-        private void Log(HttpResponseMessage responseMessage)
+        private void LogHttpResponseMessage(HttpResponseMessage responseMessage)
         {
             // format - Date Time Method Response Reason
             // example - 06 / 12 / 2018 21:30:24.6886938, GET, https://api-fxpractice.oanda.com/v3/accounts/bef06b9e0a53a0ca13149ebcecb3f9fc-606b51db4feaa79f58827dcb4d50d5e7/pricing, Bad Request
@@ -81,18 +86,18 @@ namespace ForEXTrader
                 responseMessage.RequestMessage.RequestUri.AbsoluteUri,
                 responseMessage.ReasonPhrase);
 
-
             _logWriter.WriteLine(logMessage);
         }
 
-        private static bool IsLinux()
+        private void LogStringMessage(string stringMessage)
         {
-            int platform = (int)Environment.OSVersion.Platform;
-            if (platform == 5)
-            {
-                Environment.Exit(1);
-            }
-            return (platform == 4) || (platform == 6);
+            var dateTime = DateTime.Now;
+            var logMessage = string.Format("{0} {1}, {2}",
+                dateTime.ToShortDateString(),
+                dateTime.TimeOfDay,
+                stringMessage);
+
+            _logWriter.WriteLine(logMessage);
         }
     }
 }
