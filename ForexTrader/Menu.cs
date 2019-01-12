@@ -53,10 +53,10 @@ namespace ForexTrader
         
         private void BaseMenu()
         {
-
             Console.Clear();
             Console.WriteLine("=== FOREX TRADER ===\n");
-            while (true)
+            var exit = false;
+            while (exit == false)
             {
                 Console.WriteLine("1. Set Collector Frequency.\n" +
                     "2. Set Account Details.\n" +
@@ -73,15 +73,17 @@ namespace ForexTrader
                         _menuLib.SetAccountSettings();
                         break;
                     case 3:
-                        ExitProgram();
+                        exit = true;
                         break;
                 }
             }
+
+            ExitProgram(0);
         }
 
-        private void ExitProgram()
+        private void ExitProgram(int exitCode)
         {
-            Environment.Exit(0);
+            Environment.Exit(exitCode);
         }
     }
 }
