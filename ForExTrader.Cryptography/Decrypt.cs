@@ -66,7 +66,7 @@ namespace ForexTrader.Cryptography
             }
 
             // position 0 is IV
-            return Tuple.Create(EncodingTools.StringToByteArray(splitInput[0]), splitInput[1]);
+            return Tuple.Create(EncodingTools.Base64DecodeStringToByteArray(splitInput[0]), splitInput[1]);
         }
     }
 }

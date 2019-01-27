@@ -35,7 +35,7 @@ namespace ForexTrader.Cryptography
                     aes.IV = iv;
                 }
 
-                ivString = EncodingTools.ByteArrayToString(aes.IV);
+                ivString = EncodingTools.ByteArrayToString(EncodingTools.Base64EncodeByteArray(aes.IV));
                 var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
                 using (MemoryStream msEncrypt = new MemoryStream())
                 {

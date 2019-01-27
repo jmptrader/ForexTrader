@@ -18,6 +18,11 @@ namespace ForexTrader.Cryptography
             return Encoding.UTF8.GetString(encodedBytes);
         }
 
+        public static byte[] Base64DecodeStringToByteArray(string input)
+        {
+            return Convert.FromBase64String(input);  
+        }
+
         public static byte[] Base64EncodeByteArray(byte[] input)
         {
             var base64String = Convert.ToBase64String(input);
