@@ -70,7 +70,8 @@ namespace ForexTrader
             }
             try
             {
-                if (Directory.GetFiles(_dirPath, "settings.txt", SearchOption.TopDirectoryOnly).FirstOrDefault() == "settings.txt")
+                var files = Directory.GetFiles(_dirPath);
+                if (files.Contains(_dirPath + "Settings.txt"))
                 {
                     return false;
                 }
@@ -102,7 +103,7 @@ namespace ForexTrader
             }
 
             string encryptedSettings;
-            using (var sr = new StreamReader(Path.Join(_dirPath, "settings.txt")))
+            using (var sr = new StreamReader(Path.Join(_dirPath, "Settings.txt")))
             {
                 encryptedSettings = sr.ReadLine();
             }
@@ -145,7 +146,7 @@ namespace ForexTrader
             }
 
             var encryptedSettings = _encrypt.AesEncrpyt(apiKey + ":" + accountId, password);
-            using (var sw = new StreamWriter(Path.Join(_dirPath, "settings.txt"), false))
+            using (var sw = new StreamWriter(Path.Join(_dirPath, "Settings.txt"), false))
             {
                 sw.WriteLine(encryptedSettings);
             }

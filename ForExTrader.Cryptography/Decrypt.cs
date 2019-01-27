@@ -26,13 +26,13 @@ namespace ForexTrader.Cryptography
             byte[] decryptedByteArray;
             using (var aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(pass);
+                aes.Key = Hashing.ComputeSha256(pass);
                 if (iv == null || iv.Length <= 0)
                 {
                     // Find the IV
                     var inputIvTuple = FindIv(input);
-                    input = inputIvTuple.Item1;
-                    aes.IV = Base64Tools.DecodeByteArray(inputIvTuple.Item2);
+                    aes.IV = inputIvTuple.Item1;
+                    input = inputIvTuple.Item2;
                 }
                 else
                 {
@@ -56,7 +56,7 @@ namespace ForexTrader.Cryptography
             return decryptedByteArray.ToString();
         }
 
-        private Tuple<string, byte[]> FindIv(string input)
+        private Tuple<byte[], string> FindIv(string input)
         {
             var splitInput = input.Split('|');
             if (splitInput.Length != 2)
@@ -66,7 +66,7 @@ namespace ForexTrader.Cryptography
             }
 
             // position 0 is IV
-            return Tuple.Create(splitInput[0], Encoding.UTF8.GetBytes(splitInput[1]));
+            return Tuple.Create(EncodingTools.StringToByteArray(splitInput[0]), splitInput[1]);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace ForexTrader.Cryptography
             string ivString;
             using (var aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(pass);
+                aes.Key = Hashing.ComputeSha256(pass);
                 if (iv == null || iv.Length <= 0)
                 {
                     // Generate an IV
@@ -35,7 +35,7 @@ namespace ForexTrader.Cryptography
                     aes.IV = iv;
                 }
 
-                ivString = Base64Tools.EncodeString(aes.IV.ToString());
+                ivString = EncodingTools.ByteArrayToString(aes.IV);
                 var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
                 using (MemoryStream msEncrypt = new MemoryStream())
                 {
@@ -49,9 +49,8 @@ namespace ForexTrader.Cryptography
                         encryptedByteArray = msEncrypt.ToArray();
                     }
                 }
-
             }
-            return ivString + '|' + encryptedByteArray.ToString();
+            return ivString + '|' + Encoding.UTF8.GetString(encryptedByteArray);
         }
     }
 }

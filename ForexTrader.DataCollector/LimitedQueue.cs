@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ForexTrader.DataCollector
 {
-    public class LimitedQueue<T>
+    public class LimitedQueue<T> : LinkedList<T>
     {
         private readonly int _capacity;
         private LinkedList<T> _queue = new LinkedList<T>();

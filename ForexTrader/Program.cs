@@ -28,7 +28,7 @@ namespace ForexTrader
                     menu.StartMenu();
                 }
             });
-
+                        
             // Wait for account settings to be assigned.
             SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
 
