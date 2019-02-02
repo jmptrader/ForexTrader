@@ -8,36 +8,63 @@ using System.Threading;
 using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using ForexTrader.DataCollector.Messages;
 
 namespace ForexTrader.DataCollector
 {
     public class Collector
     {
         readonly private int _frequency;
-        private static ConcurrentQueue<object> _loggerQueue;
-        private static LimitedQueue<JObject> _collectorQueue;
+        private ConcurrentQueue<AccountSettingsMessage> _settingsQueue;
+        private ConcurrentQueue<object> _loggerQueue;
+        private LimitedQueue<JObject> _collectorQueue = new LimitedQueue<JObject>(5);
         private ApiRequests _apiRequests;
-
-        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ApiRequests apiRequest)
+        
+        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> settingsQueue)
         {
             _frequency = frequency;
             _loggerQueue = loggerQueue;
-            _apiRequests = apiRequest;
-            _collectorQueue = new LimitedQueue<JObject>(5);
+            _settingsQueue = settingsQueue;
         }
 
         public void Runner()
         {
+            var legitimateSettingsReceived = true;
+            var firstSettingsQueueCount = 0;
             while (true)
             {
-                var res = CollectCurrentRates();
-                if (res != null)
+                if (!_settingsQueue.IsEmpty)
                 {
-                    var content = JObject.Parse(res.ReadAsStringAsync().Result);
-                    _collectorQueue.Enqueue(content);
+                    _settingsQueue.TryDequeue(out var newSettings);
+                    firstSettingsQueueCount = _settingsQueue.Count;
+
+                    if (newSettings == null || newSettings.ApiKey == string.Empty || newSettings.AccountId == string.Empty)
+                    {
+                        Console.WriteLine("Received invalid settings. Please input legitimate settings.");
+                        _loggerQueue.Enqueue("Received invalid settings.");
+                    }
+                    else
+                    {
+                        legitimateSettingsReceived = true;
+                        _apiRequests = new ApiRequests(newSettings.ApiKey, newSettings.AccountId);
+                    }
                 }
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));
+                if (legitimateSettingsReceived == true)
+                {
+                    var res = CollectCurrentRates();
+                    if (res != null)
+                    {
+                        var content = JObject.Parse(res.ReadAsStringAsync().Result);
+                        _collectorQueue.Enqueue(content);
+                    }
+
+                    Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));
+                }
+                else
+                {
+                    SpinWait.SpinUntil(() => _settingsQueue.Count > firstSettingsQueueCount);
+                }
             }
         }
 

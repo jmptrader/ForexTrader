@@ -93,7 +93,7 @@ namespace ForexTrader.Logging
         private void LogStringMessage(string stringMessage)
         {
             var dateTime = DateTime.Now;
-            var logMessage = $"{dateTime.ToShortDateString()} {dateTime.TimeOfDay}, {stringMessage}";
+            var logMessage = $"{dateTime.ToShortDateString()}, {dateTime.TimeOfDay}, {stringMessage}";
                 
 
             _logWriter.WriteLine(logMessage);

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
 using ForexTrader.Logging;
+using ForexTrader.DataCollector.Messages;
 
 namespace ForexTrader
 {
@@ -14,17 +15,16 @@ namespace ForexTrader
         private static ConcurrentQueue<object> _loggerQueue;
         private MenuLib _menuLib;
 
-        public string ApiKey { get; set; }
-
-        public string AccountId { get; set; }
+        public ConcurrentQueue<AccountSettingsMessage> _accountSettingsQueue;
 
         public bool RetrievedAccSettings { get; set; }
 
-        public Menu(ConcurrentQueue<object> loggerQueue)
+        public Menu(ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> accountSettingsQueue)
         {
             RetrievedAccSettings = false;
             _loggerQueue = loggerQueue;
             _menuLib = new MenuLib(_loggerQueue);
+            _accountSettingsQueue = accountSettingsQueue;
         }
 
         public void StartMenu()
@@ -35,19 +35,24 @@ namespace ForexTrader
             if (!_menuLib.CheckFirstTime(ArchitectureExplorer.IsUnix()))
             {
                 Console.WriteLine("Welcome back.");
-                var loadedSettings = _menuLib.LoadSettings();
-                ApiKey = loadedSettings.Item1;
-                AccountId = loadedSettings.Item2;
+                var settings = _menuLib.LoadSettings();
+                if (settings != null)
+                {
+                    _accountSettingsQueue.Enqueue(_menuLib.LoadSettings());
+                }
                 RetrievedAccSettings = true;
                 BaseMenu();
             }
             else
             {
-                var accountSettings = _menuLib.SetAccountSettings();
-                ApiKey = accountSettings.Item1;
-                AccountId = accountSettings.Item2;
+                var settings = _menuLib.SetAccountSettings();
+                {
+                    _accountSettingsQueue.Enqueue(settings);
+                }
+
                 RetrievedAccSettings = true;
             }
+
             BaseMenu();
         }        
         
@@ -58,7 +63,8 @@ namespace ForexTrader
             var exit = false;
             while (exit == false)
             {
-                Console.WriteLine("1. Set Collector Frequency.\n" +
+                Console.WriteLine(
+                    "1. Set Collector Frequency.\n" +
                     "2. Set Account Details.\n" +
                     "3. Exit Program.");
                 var basemenuInput = Console.ReadLine();
@@ -67,10 +73,9 @@ namespace ForexTrader
                 {
                     case 1:
                         Console.WriteLine("Setting collector frequency");
-                        
                         break;
                     case 2:
-                        _menuLib.SetAccountSettings();
+                        _accountSettingsQueue.Enqueue(_menuLib.SetAccountSettings());
                         break;
                     case 3:
                         exit = true;

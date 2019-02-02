@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Linq;
 using ForexTrader.Cryptography;
+using ForexTrader.DataCollector.Messages;
 
 namespace ForexTrader
 {
@@ -15,15 +16,16 @@ namespace ForexTrader
         private static ConcurrentQueue<object> _loggerQueue;
         private string _dirPath;
         private Decrypt _decrypt;
-        private Encrypt _encrypt = new Encrypt();
+        private Encrypt _encrypt;
 
         public MenuLib(ConcurrentQueue<object> loggerQueue)
         {
             _loggerQueue = loggerQueue;
+            _encrypt = new Encrypt(_loggerQueue);
             _decrypt = new Decrypt(_loggerQueue);
         }
 
-        public Tuple<string, string> SetAccountSettings()
+        public AccountSettingsMessage SetAccountSettings()
         {
             string apiKey = string.Empty;
             string accountId = string.Empty;
@@ -51,7 +53,7 @@ namespace ForexTrader
                 {
                     SaveSettings(apiKey, accountId);
                     Console.Clear();
-                    return Tuple.Create(apiKey, accountId);
+                    return new AccountSettingsMessage(apiKey, accountId); 
                 }
 
                 Console.WriteLine("Not all required details are supplied");
@@ -86,7 +88,7 @@ namespace ForexTrader
             return true;
         }
 
-        public Tuple<string, string> LoadSettings()
+        public AccountSettingsMessage LoadSettings()
         {
             string password = null;
             while (true)
@@ -126,7 +128,7 @@ namespace ForexTrader
             var apiKey = settingsSplit[0];
             var accountId = settingsSplit[1];
 
-            return Tuple.Create(apiKey, accountId);
+            return new AccountSettingsMessage(apiKey, accountId);
         }
 
         public void SaveSettings(string apiKey, string accountId)

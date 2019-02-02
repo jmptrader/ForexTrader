@@ -10,6 +10,7 @@ namespace ForexTrader.Cryptography
     public class Decrypt
     {
         private ConcurrentQueue<object> _loggerQueue;
+
         public Decrypt(ConcurrentQueue<object> loggerQueue)
         {
             _loggerQueue = loggerQueue;
@@ -17,56 +18,89 @@ namespace ForexTrader.Cryptography
 
         public string AesDecrypt(string input, string pass, byte[] iv = null)
         {
-            // Check arguments.
-            if (input == null || input.Length <= 0)
-                throw new ArgumentNullException("plainText");
-            if (pass == null || pass.Length <= 0)
-                throw new ArgumentNullException("Key");
+            string decrpyted;
+            var inputIvTuple = FindIv(input);
+            if (inputIvTuple == null)
+            {
+                _loggerQueue.Enqueue($"Failed to find required IV.");
+                return string.Empty;
+            }
 
-            byte[] decryptedByteArray;
-            using (var aes = Aes.Create())
+            var foundIv = inputIvTuple.Item1;
+            var decodedMessage = inputIvTuple.Item2;
+
+            using (AesManaged aes = new AesManaged())
             {
                 aes.Key = Hashing.ComputeSha256(pass);
-                if (iv == null || iv.Length <= 0)
-                {
-                    // Find the IV
-                    var inputIvTuple = FindIv(input);
-                    aes.IV = inputIvTuple.Item1;
-                    input = inputIvTuple.Item2;
-                }
-                else
-                {
-                    aes.IV = iv;
-                }
-                var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-                using (var msDecrypt = new MemoryStream())
-                {
-                    using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Write))
-                    {
-                        using (var swDecrypt = new StreamWriter(csDecrypt))
-                        {
-                            // Write all data to the stream.
-                            swDecrypt.Write(input);
-                        }
-                        decryptedByteArray = msDecrypt.ToArray();
-                    }
-                }
-
+                aes.IV = foundIv;
+                // Encrypt the string to an array of bytes.
+                decrpyted = DecryptStringFromBytes_Aes(decodedMessage, aes.Key, aes.IV);
             }
-            return decryptedByteArray.ToString();
+
+            return decrpyted;
         }
 
-        private Tuple<byte[], string> FindIv(string input)
+        private string DecryptStringFromBytes_Aes(byte[] cipherText, byte[] Key, byte[] IV)
+        {
+            // Check arguments.
+            if (cipherText == null || cipherText.Length <= 0)
+                throw new ArgumentNullException("cipherText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (IV == null || IV.Length <= 0)
+                throw new ArgumentNullException("IV");
+
+            // Declare the string used to hold
+            // the decrypted text.
+            string plaintext = null;
+
+            // Create an AesManaged object
+            // with the specified key and IV.
+            using (AesManaged aesAlg = new AesManaged())
+            {
+                aesAlg.Key = Key;
+                aesAlg.IV = IV;
+
+                // Create a decryptor to perform the stream transform.
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                // Create the streams used for decryption.
+                try
+                {
+                    using (MemoryStream msDecrypt = new MemoryStream(cipherText))
+                    {
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                            {
+
+                                // Read the decrypted bytes from the decrypting stream
+                                // and place them in a string.
+                                plaintext = srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    _loggerQueue.Enqueue($"Error occured when decrypting settings message: {e.Message}");
+                }
+            }
+
+            return plaintext;
+        }
+
+        private Tuple<byte[], byte[]> FindIv(string input)
         {
             var splitInput = input.Split('|');
             if (splitInput.Length != 2)
             {
                 _loggerQueue.Enqueue("Failed to get IV from string provided.");
-                // Still try return something further down.
+                return null;
             }
 
             // position 0 is IV
-            return Tuple.Create(EncodingTools.Base64DecodeStringToByteArray(splitInput[0]), splitInput[1]);
+            return Tuple.Create(EncodingTools.Base64DecodeStringToByteArray(splitInput[0]), EncodingTools.Base64DecodeStringToByteArray(splitInput[1]));
         }
     }
 }

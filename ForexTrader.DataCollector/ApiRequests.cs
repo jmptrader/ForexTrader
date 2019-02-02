@@ -25,8 +25,9 @@ namespace ForexTrader.DataCollector
             var request = new HttpRequestMessage()
             {
                 RequestUri = new Uri("https://api-fxpractice.oanda.com/v3/accounts/" + _accountId + "/pricing?instruments=" + _instruments),
-                Method = HttpMethod.Get,
-                            };
+                Method = HttpMethod.Get
+            };
+
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
             return await _httpClient.SendAsync(request);

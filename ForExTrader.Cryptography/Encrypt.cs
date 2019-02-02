@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
@@ -8,49 +9,78 @@ namespace ForexTrader.Cryptography
 {
     public class Encrypt
     {
-        public Encrypt()
+        private ConcurrentQueue<object> _loggerQueue;
+
+        public Encrypt(ConcurrentQueue<object> loggerQueue)
         {
+            _loggerQueue = loggerQueue;
         }
 
         public string AesEncrpyt(string input, string pass, byte[] iv = null)
         {
-            // Check arguments.
-            if (input == null || input.Length <= 0)
-                throw new ArgumentNullException("plainText");
-            if (pass == null || pass.Length <= 0)
-                throw new ArgumentNullException("Key");
-
-            byte[] encryptedByteArray;
+            byte[] encrypted;
             string ivString;
-            using (var aes = Aes.Create())
-            {
-                aes.Key = Hashing.ComputeSha256(pass);
-                if (iv == null || iv.Length <= 0)
-                {
-                    // Generate an IV
-                    aes.GenerateIV();
-                }
-                else
-                {
-                    aes.IV = iv;
-                }
 
-                ivString = EncodingTools.ByteArrayToString(EncodingTools.Base64EncodeByteArray(aes.IV));
-                var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-                using (MemoryStream msEncrypt = new MemoryStream())
+            using (AesManaged aes = new AesManaged())
+            {
+                // Encrypt the string to an array of bytes.
+                aes.Key = Hashing.ComputeSha256(pass);
+                encrypted = EncryptStringToBytes_Aes(input, aes.Key, aes.IV);
+                ivString = EncodingTools.Base64EncodeByteArrayToString(aes.IV);
+            }
+
+            return ivString + '|' + EncodingTools.Base64EncodeByteArrayToString(encrypted);
+        }
+
+        private byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
+        {
+            // Check arguments.
+            if (plainText == null || plainText.Length <= 0)
+                throw new ArgumentNullException("plainText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (IV == null || IV.Length <= 0)
+                throw new ArgumentNullException("IV");
+            byte[] encrypted;
+
+            string ivString;
+            // Create an AesManaged object
+            // with the specified key and IV.
+            using (AesManaged aesAlg = new AesManaged())
+            {
+                aesAlg.Key = Key;
+                aesAlg.IV = IV;
+
+                ivString = EncodingTools.Base64EncodeByteArrayToString(aesAlg.IV);
+
+                // Create an encryptor to perform the stream transform.
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+                // Create the streams used for encryption.
+                try
                 {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    using (MemoryStream msEncrypt = new MemoryStream())
                     {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                         {
-                            //Write all data to the stream.
-                            swEncrypt.Write(input);
+                            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                            {
+                                //Write all data to the stream.
+                                swEncrypt.Write(plainText);
+                            }
+                            encrypted = msEncrypt.ToArray();
                         }
-                        encryptedByteArray = msEncrypt.ToArray();
                     }
                 }
+                catch (Exception e)
+                {
+                    encrypted = new byte[0];
+                    _loggerQueue.Enqueue($"Failed to encrypt settings: {e.Message}");
+                }
             }
-            return ivString + '|' + Encoding.UTF8.GetString(encryptedByteArray);
+
+            // Return the encrypted bytes from the memory stream.
+            return encrypted;
         }
     }
 }
