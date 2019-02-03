@@ -17,14 +17,15 @@ namespace ForexTrader.DataCollector
         readonly private int _frequency;
         private ConcurrentQueue<AccountSettingsMessage> _settingsQueue;
         private ConcurrentQueue<object> _loggerQueue;
-        private LimitedQueue<JObject> _collectorQueue = new LimitedQueue<JObject>(5);
+        private LimitedQueue<JObject> _collectorQueue;
         private ApiRequests _apiRequests;
         
-        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> settingsQueue)
+        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> settingsQueue, LimitedQueue<JObject> collectorQueue)
         {
             _frequency = frequency;
             _loggerQueue = loggerQueue;
             _settingsQueue = settingsQueue;
+            _collectorQueue = collectorQueue;
         }
 
         public void Runner()

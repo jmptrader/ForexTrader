@@ -25,11 +25,11 @@ namespace ForexTrader.DataCollector
             _queue.AddFirst(value);
         }
 
-        public LinkedListNode<T> Dequeue()
+        public T Dequeue()
         {
             var item = _queue.Last;
             _queue.RemoveLast();
-            return item;
+            return item.Value;
         }
 
         public void ClearQueue()

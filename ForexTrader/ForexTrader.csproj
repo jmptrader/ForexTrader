@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ForExTrader.Cryptography\ForexTrader.Cryptography.csproj" />
+    <ProjectReference Include="..\ForexTrader.DataCollector\ForexTrader.DataCollector.csproj" />
+    <ProjectReference Include="..\ForExTrader.Logger\ForexTrader.Logging.csproj" />
+    <ProjectReference Include="..\ForexTrader.ML\ForexTrader.ML.csproj" />
+  </ItemGroup>
+
+</Project>

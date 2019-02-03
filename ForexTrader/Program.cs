@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using ForexTrader.Logging;
 using ForexTrader.DataCollector;
 using ForexTrader.DataCollector.Messages;
+using ForexTrader.ML;
 
 namespace ForexTrader
 {
@@ -37,7 +38,8 @@ namespace ForexTrader
             SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
 
             var dataResultQueue = new LimitedQueue<JObject>(5);
-            var collector = new Collector(50, loggerQueue, settingsQueue);
+            var collector = new Collector(50, loggerQueue, settingsQueue, dataResultQueue);
+            var mlForex = new DataQueueReceiver(dataResultQueue);
 
             var loggerTask = Task.Factory.StartNew(() =>
             {
@@ -46,11 +48,20 @@ namespace ForexTrader
                     logger.QueueChecker();
                 }
             });
+
             var collectorTask = Task.Factory.StartNew(() =>
             {
                 lock (collector)
                 {
                     collector.Runner();
+                }
+            });
+
+            var MLTask = Task.Factory.StartNew(() =>
+            {
+                lock (mlForex)
+                {
+                    mlForex.StartMLing();
                 }
             });
         
