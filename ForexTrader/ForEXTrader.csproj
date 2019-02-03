@@ -13,6 +13,7 @@
     <ProjectReference Include="..\ForExTrader.Cryptography\ForexTrader.Cryptography.csproj" />
     <ProjectReference Include="..\ForexTrader.DataCollector\ForexTrader.DataCollector.csproj" />
     <ProjectReference Include="..\ForExTrader.Logger\ForexTrader.Logging.csproj" />
+    <ProjectReference Include="..\ForexTrader.ML\ForexTrader.ML.csproj" />
   </ItemGroup>
 
 </Project>
