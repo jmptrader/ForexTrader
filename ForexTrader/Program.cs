@@ -36,9 +36,6 @@ namespace ForexTrader
             // Wait for account settings to be assigned.
             SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
 
-            Console.WriteLine("Setting up ApiRequest library.");
-            Console.WriteLine("Setting up collector.");        
-
             var dataResultQueue = new LimitedQueue<JObject>(5);
             var collector = new Collector(50, loggerQueue, settingsQueue);
 

@@ -14,6 +14,10 @@ namespace ForexTrader.DataCollector
         private readonly string _instruments = "GBP_AUD%2CGBP_CAD%2CGBP_CHF%2CGBP_JPY%2CGBP_NZD%2CGBP_PLN%2CGBP_SGD%2CGBP_USD%2CGBP_ZAR%2CEUR_GBP";
         private HttpClient _httpClient = new HttpClient();
 
+        public ApiRequests()
+        {
+        }
+
         public ApiRequests(string key, string accountId)
         {
             _key = key;
@@ -31,6 +35,16 @@ namespace ForexTrader.DataCollector
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
             return await _httpClient.SendAsync(request);
+        }
+
+        public bool HasValidSettings()
+        {
+            if (_key == string.Empty || _key == null|| _accountId == string.Empty || _accountId == null)
+            {
+                return false;
+            }
+
+            return true;
         }
         
     }

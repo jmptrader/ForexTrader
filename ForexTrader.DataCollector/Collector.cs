@@ -29,28 +29,40 @@ namespace ForexTrader.DataCollector
 
         public void Runner()
         {
-            var legitimateSettingsReceived = true;
-            var firstSettingsQueueCount = 0;
+            _apiRequests = new ApiRequests();
+
             while (true)
             {
                 if (!_settingsQueue.IsEmpty)
                 {
-                    _settingsQueue.TryDequeue(out var newSettings);
-                    firstSettingsQueueCount = _settingsQueue.Count;
+                    while (true)
+                    {
+                        _settingsQueue.TryDequeue(out var newSettings);
 
-                    if (newSettings == null || newSettings.ApiKey == string.Empty || newSettings.AccountId == string.Empty)
-                    {
-                        Console.WriteLine("Received invalid settings. Please input legitimate settings.");
-                        _loggerQueue.Enqueue("Received invalid settings.");
-                    }
-                    else
-                    {
-                        legitimateSettingsReceived = true;
-                        _apiRequests = new ApiRequests(newSettings.ApiKey, newSettings.AccountId);
+                        // check if valid
+                        if (AssertValidSettings(newSettings))
+                        {
+                            _apiRequests = new ApiRequests(newSettings.ApiKey, newSettings.AccountId);
+                            break;
+                        }
+                        else
+                        {
+                            // check if old settings are still valid
+                            _loggerQueue.Enqueue($"Could not apply new settings. Trying to revert back to old settings.");
+
+                            if (!_apiRequests.HasValidSettings())
+                            {
+                                _loggerQueue.Enqueue($"Could not use old settings. Waiting for new settings to arrive.");
+                                SpinWait.SpinUntil(() => !_settingsQueue.IsEmpty);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
                     }
                 }
-
-                if (legitimateSettingsReceived == true)
+                else
                 {
                     var res = CollectCurrentRates();
                     if (res != null)
@@ -61,14 +73,23 @@ namespace ForexTrader.DataCollector
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));
                 }
-                else
-                {
-                    SpinWait.SpinUntil(() => _settingsQueue.Count > firstSettingsQueueCount);
-                }
             }
+            
         }
 
-        public HttpContent CollectCurrentRates()
+        private bool AssertValidSettings(AccountSettingsMessage newSettings)
+        {
+            if (newSettings == null || newSettings.ApiKey == string.Empty || newSettings.AccountId == string.Empty)
+            {
+                Console.WriteLine("\nReceived invalid settings. Please input legitimate settings.");
+                _loggerQueue.Enqueue("Received invalid settings.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private HttpContent CollectCurrentRates()
         {
             var response = _apiRequests.GetExchangeRates().Result;
             if (!response.IsSuccessStatusCode)

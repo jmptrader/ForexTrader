@@ -36,10 +36,11 @@ namespace ForexTrader
             {
                 Console.WriteLine("Welcome back.");
                 var settings = _menuLib.LoadSettings();
-                if (settings != null)
+                if (settings == null)
                 {
-                    _accountSettingsQueue.Enqueue(_menuLib.LoadSettings());
+                    _accountSettingsQueue.Enqueue(_menuLib.SetAccountSettings());
                 }
+                _accountSettingsQueue.Enqueue(settings);
                 RetrievedAccSettings = true;
                 BaseMenu();
             }
@@ -67,8 +68,8 @@ namespace ForexTrader
                     "1. Set Collector Frequency.\n" +
                     "2. Set Account Details.\n" +
                     "3. Exit Program.");
-                var basemenuInput = Console.ReadLine();
-                int.TryParse(basemenuInput, out var intInput);
+                var basemenuInput = Console.ReadKey();
+                int.TryParse(basemenuInput.KeyChar.ToString(), out var intInput);
                 switch(intInput)
                 {
                     case 1:

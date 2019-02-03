@@ -9,6 +9,8 @@ namespace ForexTrader.DataCollector
         private readonly int _capacity;
         private LinkedList<T> _queue = new LinkedList<T>();
 
+        public new int Count => _queue.Count;
+
         public LimitedQueue(int capacity)
         {
             _capacity = capacity;
@@ -20,7 +22,7 @@ namespace ForexTrader.DataCollector
             {
                 RemoveLastItem();
             }
-            _queue. AddFirst(value);
+            _queue.AddFirst(value);
         }
 
         public LinkedListNode<T> Dequeue()
