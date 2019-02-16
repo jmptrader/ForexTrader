@@ -7,10 +7,11 @@ using System.Text;
 using System.Threading.Tasks;
 using ForexTrader.Logging;
 using ForexTrader.DataCollector.Messages;
+using ForexTrader.Interfaces;
 
 namespace ForexTrader
 {
-    public class Menu
+    public class Menu : IMenu
     {
         private static ConcurrentQueue<object> _loggerQueue;
         private MenuLib _menuLib;

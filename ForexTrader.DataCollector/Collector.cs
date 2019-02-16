@@ -9,10 +9,11 @@ using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using ForexTrader.DataCollector.Messages;
+using ForexTrader.DataCollector.Interfaces;
 
 namespace ForexTrader.DataCollector
 {
-    public class Collector
+    public class Collector : ICollector
     {
         readonly private int _frequency;
         private ConcurrentQueue<AccountSettingsMessage> _settingsQueue;

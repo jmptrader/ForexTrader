@@ -1,10 +1,11 @@
-﻿using System;
+﻿using ForexTrader.DataCollector.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ForexTrader.DataCollector
 {
-    public class LimitedQueue<T> : LinkedList<T>
+    public class LimitedQueue<T> : LinkedList<T>, ILimitedQueue<T>
     {
         private readonly int _capacity;
         private LinkedList<T> _queue = new LinkedList<T>();

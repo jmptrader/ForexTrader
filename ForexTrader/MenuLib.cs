@@ -6,10 +6,11 @@ using System.IO;
 using System.Linq;
 using ForexTrader.Cryptography;
 using ForexTrader.DataCollector.Messages;
+using ForexTrader.Interfaces;
 
 namespace ForexTrader
 {
-    public class MenuLib
+    public class MenuLib : IMenuLib
     {
         private readonly string _unixLoc = @"/opt/ForexTrader/";
         private readonly string _winLoc = @"Program Files\ForexTrader\";

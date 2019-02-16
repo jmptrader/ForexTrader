@@ -6,10 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Collections.Concurrent;
+using ForexTrader.Logging.Interfaces;
 
 namespace ForexTrader.Logging
 {
-    public class Logger
+    public class Logger : ILogger
     {
         private StreamWriter _logWriter;
         private string _dirPath;

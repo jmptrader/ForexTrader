@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ForexTrader.Cryptography.Interfaces;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +8,7 @@ using System.Text;
 
 namespace ForexTrader.Cryptography
 {
-    public class Encrypt
+    public class Encrypt : IEncrypt
     {
         private ConcurrentQueue<object> _loggerQueue;
 
@@ -16,7 +17,7 @@ namespace ForexTrader.Cryptography
             _loggerQueue = loggerQueue;
         }
 
-        public string AesEncrpyt(string input, string pass, byte[] iv = null)
+        public string AesEncrypt(string input, string pass, byte[] iv = null)
         {
             byte[] encrypted;
             string ivString;

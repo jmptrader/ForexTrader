@@ -4,10 +4,11 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using ForexTrader;
+using ForexTrader.Cryptography.Interfaces;
 
 namespace ForexTrader.Cryptography
 {
-    public class Decrypt
+    public class Decrypt : IDecrypt
     {
         private ConcurrentQueue<object> _loggerQueue;
 
