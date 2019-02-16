@@ -20,22 +20,35 @@ namespace ForexTrader.Cryptography
         public string AesDecrypt(string input, string pass, byte[] iv = null)
         {
             string decrpyted;
-            var inputIvTuple = FindIv(input);
-            if (inputIvTuple == null)
+            byte[] encryptedMessage = null;
+            if (iv == null)
             {
-                _loggerQueue.Enqueue($"Failed to find required IV.");
-                return string.Empty;
+                var inputIvTuple = FindIv(input);
+                iv = inputIvTuple.Item1;
+                encryptedMessage = inputIvTuple.Item2;
+
+                // if still null :(
+                if (iv == null || encryptedMessage == null)
+                {
+                    _loggerQueue.Enqueue($"Failed to gather required information. iv: {iv}, encryptedMessage: {encryptedMessage}");
+                    return string.Empty;
+                }
             }
 
-            var foundIv = inputIvTuple.Item1;
-            var decodedMessage = inputIvTuple.Item2;
-
-            using (AesManaged aes = new AesManaged())
+            try
             {
-                aes.Key = Hashing.ComputeSha256(pass);
-                aes.IV = foundIv;
-                // Encrypt the string to an array of bytes.
-                decrpyted = DecryptStringFromBytes_Aes(decodedMessage, aes.Key, aes.IV);
+                using (AesManaged aes = new AesManaged())
+                {
+                    aes.Key = Hashing.ComputeSha256(pass);
+                    aes.IV = iv;
+                    // Encrypt the string to an array of bytes.
+                    decrpyted = DecryptStringFromBytes_Aes(encryptedMessage, aes.Key, aes.IV);
+                }
+            }
+            catch (Exception e)
+            {
+                _loggerQueue.Enqueue($"Failed to decrypt message: {e}");
+                return string.Empty;
             }
 
             return decrpyted;
