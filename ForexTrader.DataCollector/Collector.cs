@@ -18,7 +18,7 @@ namespace ForexTrader.DataCollector
         readonly private int _frequency;
         private ConcurrentQueue<AccountSettingsMessage> _settingsQueue;
         private ConcurrentQueue<object> _loggerQueue;
-        private LimitedQueue<JObject> _collectorQueue;
+        private ILimitedQueue<JObject> _collectorQueue;
         private ApiRequests _apiRequests;
         
         public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> settingsQueue, LimitedQueue<JObject> collectorQueue)

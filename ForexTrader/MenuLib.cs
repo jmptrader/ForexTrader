@@ -7,6 +7,7 @@ using System.Linq;
 using ForexTrader.Cryptography;
 using ForexTrader.DataCollector.Messages;
 using ForexTrader.Interfaces;
+using ForexTrader.Cryptography.Interfaces;
 
 namespace ForexTrader
 {
@@ -16,8 +17,8 @@ namespace ForexTrader
         private readonly string _winLoc = @"Program Files\ForexTrader\";
         private static ConcurrentQueue<object> _loggerQueue;
         private string _dirPath;
-        private Decrypt _decrypt;
-        private Encrypt _encrypt;
+        private IDecrypt _decrypt;
+        private IEncrypt _encrypt;
 
         public MenuLib(ConcurrentQueue<object> loggerQueue)
         {
@@ -148,7 +149,7 @@ namespace ForexTrader
                 Console.WriteLine("We need a valid password.");
             }
 
-            var encryptedSettings = _encrypt.AesEncrpyt(apiKey + ":" + accountId, password);
+            var encryptedSettings = _encrypt.AesEncrypt(apiKey + ":" + accountId, password);
             using (var sw = new StreamWriter(Path.Join(_dirPath, "Settings.txt"), false))
             {
                 sw.WriteLine(encryptedSettings);

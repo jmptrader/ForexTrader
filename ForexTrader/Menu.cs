@@ -14,7 +14,7 @@ namespace ForexTrader
     public class Menu : IMenu
     {
         private static ConcurrentQueue<object> _loggerQueue;
-        private MenuLib _menuLib;
+        private IMenuLib _menuLib;
 
         public ConcurrentQueue<AccountSettingsMessage> _accountSettingsQueue;
 
