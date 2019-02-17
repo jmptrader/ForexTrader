@@ -10,7 +10,10 @@ namespace ForexTrader.DataCollector
         private readonly int _capacity;
         private LinkedList<T> _queue = new LinkedList<T>();
 
-        public new int Count => _queue.Count;
+        public new int Count()
+        {
+            return _queue.Count;
+        }
 
         public LimitedQueue(int capacity)
         {

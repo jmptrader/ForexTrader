@@ -16,25 +16,32 @@ namespace ForexTrader.Logging
         private string _dirPath;
         private readonly string _unixLoc = @"/opt/ForexTrader/";
         private readonly string _winLoc = @"Program Files\ForexTrader\";
-        private ConcurrentQueue<object> _loggerQueue;
-
-        public Logger(ConcurrentQueue<object> loggerQueue)
+        private ConcurrentQueue<object> _loggerQueue = new ConcurrentQueue<object>();
+        private IArchitectureExplorer _architectureExplorer;
+        
+        public Logger()
         {
-            _loggerQueue = loggerQueue;
             SetupLogFile();
+        }
+
+        public void AddLogEntry(object value)
+        {
+            _loggerQueue.Enqueue(value);
         }
 
         private void SetupLogFile()
         {
-            if (ArchitectureExplorer.IsUnix())
+            _architectureExplorer = new ArchitectureExplorer(this);
+
+            if (_architectureExplorer.IsUnix())
             {
-                _loggerQueue.Enqueue("System is unix based. Setting up logging directories and file.");
-                _dirPath = ArchitectureExplorer.ArchRootPath(_unixLoc);
+                _loggerQueue.Enqueue("Setting up logging directories and file.");
+                _dirPath = _architectureExplorer.ArchRootPath(_unixLoc);
             }
             else
             {
-                _loggerQueue.Enqueue("System is not unix based. Setting up logging directories and file.");
-                _dirPath = ArchitectureExplorer.ArchRootPath(_winLoc);
+                _loggerQueue.Enqueue("Setting up logging directories and file.");
+                _dirPath = _architectureExplorer.ArchRootPath(_winLoc);
             }
 
             if (!File.Exists(_dirPath))

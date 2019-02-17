@@ -10,6 +10,9 @@ using ForexTrader.Logging;
 using ForexTrader.DataCollector;
 using ForexTrader.DataCollector.Messages;
 using ForexTrader.ML;
+using ForexTrader.Logging.Interfaces;
+using ForexTrader.DataCollector.Interfaces;
+using ForexTrader.Interfaces;
 
 namespace ForexTrader
 {
@@ -18,14 +21,12 @@ namespace ForexTrader
         static void Main(string[] args)
         {
             Console.WriteLine("Setting up logger.");
-            var loggerQueue = new ConcurrentQueue<object>();
+            ILogger logger = new Logger();
+            ICollector collector = new Collector(50, logger);
             var accountSettingsQueue = new ConcurrentQueue<AccountSettingsMessage>();
-            var logger = new Logger(loggerQueue);
-            var settingsQueue = new ConcurrentQueue<AccountSettingsMessage>();
-
-
+            
             Console.WriteLine("Setting up menu.");
-            var menu = new Menu(loggerQueue, settingsQueue);
+            var menu = new Menu(logger, collector);
             var menuTask = Task.Factory.StartNew(() =>
             {
                 lock (menu)
@@ -37,9 +38,7 @@ namespace ForexTrader
             // Wait for account settings to be assigned.
             SpinWait.SpinUntil(() => menu.RetrievedAccSettings == true);
 
-            var dataResultQueue = new LimitedQueue<JObject>(5);
-            var collector = new Collector(50, loggerQueue, settingsQueue, dataResultQueue);
-            var mlForex = new DataQueueReceiver(dataResultQueue);
+            var mlForex = new DataQueueReceiver(collector);
 
             var loggerTask = Task.Factory.StartNew(() =>
             {

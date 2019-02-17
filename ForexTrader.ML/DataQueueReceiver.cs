@@ -1,4 +1,5 @@
 ﻿using ForexTrader.DataCollector;
+using ForexTrader.DataCollector.Interfaces;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -7,19 +8,19 @@ namespace ForexTrader.ML
 {
     public class DataQueueReceiver
     {
-        private LimitedQueue<JObject> _dataQueue;
+        private ICollector _collector;
 
-        public DataQueueReceiver(LimitedQueue<JObject> dataQueue)
+        public DataQueueReceiver(ICollector collector)
         {
-            _dataQueue = dataQueue;
+            _collector = collector;
         }
 
         public void StartMLing()
         {
             while (true)
             {
-                SpinWait.SpinUntil(() => _dataQueue.Count > 0);
-                var data = _dataQueue.Dequeue();
+                SpinWait.SpinUntil(() => _collector.CollectorQueueCount() > 0);
+                var data = _collector.TakeLatestFromCollectorQueue();
             }
         }
     }

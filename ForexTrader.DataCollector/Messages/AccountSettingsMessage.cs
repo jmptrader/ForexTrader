@@ -1,10 +1,11 @@
-﻿using System;
+﻿using ForexTrader.DataCollector.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ForexTrader.DataCollector.Messages
 {
-    public class AccountSettingsMessage
+    public class AccountSettingsMessage : IMessage
     {
         public AccountSettingsMessage(string apiKey, string accountId)
         {

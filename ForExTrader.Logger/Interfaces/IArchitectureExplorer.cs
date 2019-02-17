@@ -4,9 +4,10 @@ using System.Text;
 
 namespace ForexTrader.Logging.Interfaces
 {
-    public interface ILogger
+    public interface IArchitectureExplorer
     {
-        void AddLogEntry(object value);
-        void QueueChecker();
+        bool IsUnix();
+
+        string ArchRootPath(string target = null);
     }
 }

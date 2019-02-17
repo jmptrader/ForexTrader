@@ -5,22 +5,23 @@ using System.Security.Cryptography;
 using System.Text;
 using ForexTrader;
 using ForexTrader.Cryptography.Interfaces;
+using ForexTrader.Logging.Interfaces;
 
 namespace ForexTrader.Cryptography
 {
     public class Decrypt : IDecrypt
     {
-        private ConcurrentQueue<object> _loggerQueue;
+        private readonly ILogger _logger;
 
-        public Decrypt(ConcurrentQueue<object> loggerQueue)
+        public Decrypt(ILogger logger)
         {
-            _loggerQueue = loggerQueue;
+            _logger = logger;
         }
 
         public string AesDecrypt(string input, string pass, byte[] iv = null)
         {
             string decrpyted;
-            byte[] encryptedMessage = null;
+            byte[] encryptedMessage = EncodingTools.StringToByteArray(input);
             if (iv == null)
             {
                 var inputIvTuple = FindIv(input);
@@ -30,7 +31,7 @@ namespace ForexTrader.Cryptography
                 // if still null :(
                 if (iv == null || encryptedMessage == null)
                 {
-                    _loggerQueue.Enqueue($"Failed to gather required information. iv: {iv}, encryptedMessage: {encryptedMessage}");
+                    _logger.AddLogEntry($"Failed to gather required information. iv: {iv}, encryptedMessage: {encryptedMessage}");
                     return string.Empty;
                 }
             }
@@ -47,7 +48,7 @@ namespace ForexTrader.Cryptography
             }
             catch (Exception e)
             {
-                _loggerQueue.Enqueue($"Failed to decrypt message: {e}");
+                _logger.AddLogEntry($"Failed to decrypt message: {e}");
                 return string.Empty;
             }
 
@@ -97,7 +98,7 @@ namespace ForexTrader.Cryptography
                 }
                 catch(Exception e)
                 {
-                    _loggerQueue.Enqueue($"Error occured when decrypting settings message: {e.Message}");
+                    _logger.AddLogEntry($"Error occured when decrypting settings message: {e.Message}");
                 }
             }
 
@@ -109,7 +110,7 @@ namespace ForexTrader.Cryptography
             var splitInput = input.Split('|');
             if (splitInput.Length != 2)
             {
-                _loggerQueue.Enqueue("Failed to get IV from string provided.");
+                _logger.AddLogEntry("Failed to get IV from string provided.");
                 return null;
             }
 

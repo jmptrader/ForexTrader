@@ -8,6 +8,7 @@ using ForexTrader.Cryptography;
 using ForexTrader.DataCollector.Messages;
 using ForexTrader.Interfaces;
 using ForexTrader.Cryptography.Interfaces;
+using ForexTrader.Logging.Interfaces;
 
 namespace ForexTrader
 {
@@ -15,16 +16,16 @@ namespace ForexTrader
     {
         private readonly string _unixLoc = @"/opt/ForexTrader/";
         private readonly string _winLoc = @"Program Files\ForexTrader\";
-        private static ConcurrentQueue<object> _loggerQueue;
+        private static ILogger _logger;
         private string _dirPath;
         private IDecrypt _decrypt;
         private IEncrypt _encrypt;
 
-        public MenuLib(ConcurrentQueue<object> loggerQueue)
+        public MenuLib(ILogger logger)
         {
-            _loggerQueue = loggerQueue;
-            _encrypt = new Encrypt(_loggerQueue);
-            _decrypt = new Decrypt(_loggerQueue);
+            _logger = logger;
+            _encrypt = new Encrypt(_logger);
+            _decrypt = new Decrypt(_logger);
         }
 
         public AccountSettingsMessage SetAccountSettings()
@@ -40,7 +41,7 @@ namespace ForexTrader
                 if (apiInput != string.Empty)
                 {
                     apiKey = apiInput;
-                    _loggerQueue.Enqueue("User updated API key.");
+                    _logger.AddLogEntry("User updated API key.");
                 }
 
                 Console.Write("Account ID (Empty for no change): ");
@@ -48,7 +49,7 @@ namespace ForexTrader
                 if (accountInput != string.Empty)
                 {
                     accountId = accountInput;
-                    _loggerQueue.Enqueue("User updated Account ID.");
+                    _logger.AddLogEntry("User updated Account ID.");
                 }
 
                 if ((accountId != string.Empty || accountId != null) && (apiKey != string.Empty || apiKey != null))
@@ -82,7 +83,7 @@ namespace ForexTrader
             }
             catch (Exception e)
             {
-                _loggerQueue.Enqueue("Failed to search for settings.txt, Error: " + e);
+                _logger.AddLogEntry("Failed to search for settings.txt, Error: " + e);
                 Console.WriteLine("Exiting");
                 Console.ReadLine();
                 Environment.Exit(0);
@@ -102,7 +103,7 @@ namespace ForexTrader
                     break;
                 }
 
-                _loggerQueue.Enqueue("User inserted invalid password upon loading settings.");
+                _logger.AddLogEntry("User inserted invalid password upon loading settings.");
                 Console.WriteLine("We need a valid password.");
             }
 
@@ -115,7 +116,7 @@ namespace ForexTrader
             if (encryptedSettings == string.Empty || encryptedSettings == null)
             {
                 Console.WriteLine("Failed to retrieve settings.");
-                _loggerQueue.Enqueue("Failed to get settings from settings file. Nothing was returned.");
+                _logger.AddLogEntry("Failed to get settings from settings file. Nothing was returned.");
                 return null;
             }
 
@@ -123,7 +124,7 @@ namespace ForexTrader
             var settingsSplit = settings.Split(':', StringSplitOptions.RemoveEmptyEntries);
             if (settingsSplit.Length != 2)
             {
-                _loggerQueue.Enqueue($"Settings file loaded incorrect number of settings values {settingsSplit.Length}");
+                _logger.AddLogEntry($"Settings file loaded incorrect number of settings values {settingsSplit.Length}");
                 return null;
             }
 
@@ -145,7 +146,7 @@ namespace ForexTrader
                     break;
                 }
 
-                _loggerQueue.Enqueue("User inserted invalid password upon saving settings.");
+                _logger.AddLogEntry("User inserted invalid password upon saving settings.");
                 Console.WriteLine("We need a valid password.");
             }
 
@@ -155,7 +156,7 @@ namespace ForexTrader
                 sw.WriteLine(encryptedSettings);
             }
 
-            _loggerQueue.Enqueue("Saved settings to settings file.");
+            _logger.AddLogEntry("Saved settings to settings file.");
         }
 
         public string InputPassword()

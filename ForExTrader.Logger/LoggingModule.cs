@@ -11,6 +11,7 @@ namespace ForexTrader.Logging
         public override void Load()
         {
             Bind<ILogger>().To<Logger>().InSingletonScope();
+            Bind<IArchitectureExplorer>().To<ArchitectureExplorer>();
         }
     }
 }

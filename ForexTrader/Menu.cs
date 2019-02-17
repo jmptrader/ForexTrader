@@ -8,24 +8,27 @@ using System.Threading.Tasks;
 using ForexTrader.Logging;
 using ForexTrader.DataCollector.Messages;
 using ForexTrader.Interfaces;
+using ForexTrader.Logging.Interfaces;
+using ForexTrader.DataCollector.Interfaces;
 
 namespace ForexTrader
 {
     public class Menu : IMenu
     {
-        private static ConcurrentQueue<object> _loggerQueue;
+        private readonly ILogger _logger;
+        private readonly ICollector _collector;
         private IMenuLib _menuLib;
-
-        public ConcurrentQueue<AccountSettingsMessage> _accountSettingsQueue;
+        private IArchitectureExplorer _architectureExplorer;
 
         public bool RetrievedAccSettings { get; set; }
 
-        public Menu(ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> accountSettingsQueue)
+        public Menu(ILogger logger, ICollector collector)
         {
             RetrievedAccSettings = false;
-            _loggerQueue = loggerQueue;
-            _menuLib = new MenuLib(_loggerQueue);
-            _accountSettingsQueue = accountSettingsQueue;
+            _logger = logger;
+            _collector = collector;
+            _menuLib = new MenuLib(_logger);
+            _architectureExplorer = new ArchitectureExplorer(_logger);
         }
 
         public void StartMenu()
@@ -33,15 +36,15 @@ namespace ForexTrader
             Console.WriteLine("Checking if first time run...");
             
             // Check first time run
-            if (!_menuLib.CheckFirstTime(ArchitectureExplorer.IsUnix()))
+            if (!_menuLib.CheckFirstTime(_architectureExplorer.IsUnix()))
             {
                 Console.WriteLine("Welcome back.");
                 var settings = _menuLib.LoadSettings();
                 if (settings == null)
                 {
-                    _accountSettingsQueue.Enqueue(_menuLib.SetAccountSettings());
+                    _collector.AddToMessageQueue(_menuLib.SetAccountSettings());
                 }
-                _accountSettingsQueue.Enqueue(settings);
+                _collector.AddToMessageQueue(settings);
                 RetrievedAccSettings = true;
                 BaseMenu();
             }
@@ -49,7 +52,7 @@ namespace ForexTrader
             {
                 var settings = _menuLib.SetAccountSettings();
                 {
-                    _accountSettingsQueue.Enqueue(settings);
+                    _collector.AddToMessageQueue(settings);
                 }
 
                 RetrievedAccSettings = true;
@@ -77,7 +80,7 @@ namespace ForexTrader
                         Console.WriteLine("Setting collector frequency");
                         break;
                     case 2:
-                        _accountSettingsQueue.Enqueue(_menuLib.SetAccountSettings());
+                        _collector.AddToMessageQueue(_menuLib.SetAccountSettings());
                         break;
                     case 3:
                         exit = true;

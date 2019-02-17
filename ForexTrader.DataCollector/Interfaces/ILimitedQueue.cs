@@ -6,6 +6,8 @@ namespace ForexTrader.DataCollector.Interfaces
 {
     public interface ILimitedQueue<T>
     {
+        int Count();
+
         void Enqueue(T value);
 
         T Dequeue();

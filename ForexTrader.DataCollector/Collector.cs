@@ -10,23 +10,42 @@ using System.IO;
 using Newtonsoft.Json.Linq;
 using ForexTrader.DataCollector.Messages;
 using ForexTrader.DataCollector.Interfaces;
+using ForexTrader.Logging.Interfaces;
 
 namespace ForexTrader.DataCollector
 {
     public class Collector : ICollector
     {
         readonly private int _frequency;
-        private ConcurrentQueue<AccountSettingsMessage> _settingsQueue;
-        private ConcurrentQueue<object> _loggerQueue;
-        private ILimitedQueue<JObject> _collectorQueue;
+        private ILogger _logger;
+        private ILimitedQueue<JObject> _collectorQueue = new LimitedQueue<JObject>(5);
+        private ConcurrentQueue<IMessage> _settingsQueue = new ConcurrentQueue<IMessage>();
         private ApiRequests _apiRequests;
         
-        public Collector(int frequency, ConcurrentQueue<object> loggerQueue, ConcurrentQueue<AccountSettingsMessage> settingsQueue, LimitedQueue<JObject> collectorQueue)
+        public Collector(int frequency, ILogger logger)
         {
             _frequency = frequency;
-            _loggerQueue = loggerQueue;
-            _settingsQueue = settingsQueue;
-            _collectorQueue = collectorQueue;
+            _logger = logger;
+        }
+
+        public void AddToCollectorQueue(JObject item)
+        {
+            _collectorQueue.Enqueue(item);
+        }
+
+        public JObject TakeLatestFromCollectorQueue()
+        {
+            return _collectorQueue.Dequeue();
+        }
+
+        public int CollectorQueueCount()
+        {
+            return _collectorQueue.Count();
+        }
+
+        public void AddToMessageQueue(IMessage message)
+        {
+            _settingsQueue.Enqueue(message);
         }
 
         public void Runner()
@@ -50,11 +69,11 @@ namespace ForexTrader.DataCollector
                         else
                         {
                             // check if old settings are still valid
-                            _loggerQueue.Enqueue($"Could not apply new settings. Trying to revert back to old settings.");
+                            _logger.AddLogEntry($"Could not apply new settings. Trying to revert back to old settings.");
 
                             if (!_apiRequests.HasValidSettings())
                             {
-                                _loggerQueue.Enqueue($"Could not use old settings. Waiting for new settings to arrive.");
+                                _logger.AddLogEntry($"Could not use old settings. Waiting for new settings to arrive.");
                                 SpinWait.SpinUntil(() => !_settingsQueue.IsEmpty);
                             }
                             else
@@ -76,7 +95,6 @@ namespace ForexTrader.DataCollector
                     Thread.Sleep(TimeSpan.FromMilliseconds(_frequency));
                 }
             }
-            
         }
 
         private bool AssertValidSettings(AccountSettingsMessage newSettings)
@@ -84,7 +102,7 @@ namespace ForexTrader.DataCollector
             if (newSettings == null || newSettings.ApiKey == string.Empty || newSettings.AccountId == string.Empty)
             {
                 Console.WriteLine("\nReceived invalid settings. Please input legitimate settings.");
-                _loggerQueue.Enqueue("Received invalid settings.");
+                _logger.AddLogEntry("Received invalid settings.");
                 return false;
             }
 
@@ -96,9 +114,10 @@ namespace ForexTrader.DataCollector
             var response = _apiRequests.GetExchangeRates().Result;
             if (!response.IsSuccessStatusCode)
             {
-                _loggerQueue.Enqueue(response);
+                _logger.AddLogEntry(response);
                 return null;
             }
+
             return response.Content;
         }
     }

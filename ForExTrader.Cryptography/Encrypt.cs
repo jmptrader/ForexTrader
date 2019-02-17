@@ -1,4 +1,5 @@
 ﻿using ForexTrader.Cryptography.Interfaces;
+using ForexTrader.Logging.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,11 +11,11 @@ namespace ForexTrader.Cryptography
 {
     public class Encrypt : IEncrypt
     {
-        private ConcurrentQueue<object> _loggerQueue;
+        private ILogger _logger;
 
-        public Encrypt(ConcurrentQueue<object> loggerQueue)
+        public Encrypt(ILogger logger)
         {
-            _loggerQueue = loggerQueue;
+            _logger = logger;
         }
 
         public string AesEncrypt(string input, string pass, byte[] iv = null)
@@ -76,7 +77,7 @@ namespace ForexTrader.Cryptography
                 catch (Exception e)
                 {
                     encrypted = new byte[0];
-                    _loggerQueue.Enqueue($"Failed to encrypt settings: {e.Message}");
+                    _logger.AddLogEntry($"Failed to encrypt settings: {e.Message}");
                 }
             }
 

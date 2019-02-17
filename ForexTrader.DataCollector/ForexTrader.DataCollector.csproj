@@ -9,4 +9,8 @@
     <PackageReference Include="Ninject" Version="3.3.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ForExTrader.Logger\ForexTrader.Logging.csproj" />
+  </ItemGroup>
+
 </Project>
